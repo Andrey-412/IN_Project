@@ -1,0 +1,231 @@
+{ 									"name" : "MainInsideWalls",
+									"buildArmature" : true,
+									"buildWalls" : true,
+									"materials" : { "outside" : [ true, THREE.FrontSide ], "inside" : [ false ]},
+									"buildTop" : false,
+									"buildBottom" : false, 
+									"vertex": [ [0.5,0,0.5], [3.5,0,0.5], [3.75,0,0.5], [11.25,0,0.5], [11.5,0,0.5], [19.5,0,0.5],
+												[19.5,0,8.5], [19.5,0,8.75], [19.5,0,16.5], [0.5,0,16.5], [0.5,0,8.75], [0.5,0,8.5] ],												
+									"edge": [ [0,1],[1,13],[13,12],[12,0],
+											  [1,2],[2,14],[14,13],
+											  [2,3],[3,15],[15,14],
+											  [3,4],[4,16],[16,15],
+											  [4,5],[5,17],[17,16],
+											  [5,6],[6,18],[18,17],
+											  [6,7],[7,19],[19,18],
+											  [7,8],[8,20],[20,19],
+											  [8,9],[9,21],[21,20],
+											  [9,10],[10,22],[22,21],
+											  [10,11],[11,23],[23,22],
+											  [11,0],[12,23] ],
+									"face": [ [0,1,13,12],[1,2,14,13],[2,3,15,14],[3,4,16,15],[4,5,17,16],[5,6,18,17],[6,7,19,18],[7,8,20,19],[8,9,21,20],
+											  [9,10,22,21],[10,11,23,22],[11,0,12,23]],									
+							},
+							{ 		"name" : "InsideWalls",
+									"useAnotherObject" : 1,
+									"buildArmature" : true,
+									"buildWalls" : false,
+									"buildTop" : false,
+									"buildBottom" : false, 
+									"vertex": [ [3.5,0,8.5], [3.5,0,8.75], [3.75,0,8.5], [3.75,0,8.75],
+												[11.25,0,8.5], [11.25,0,8.75], [11.5,0,8.5], [11.5,0,8.75]],
+									"edge": [ [-1,0],[0,8],[-13,8], 
+											  [-2,2],[2,10],[-14,10],											  
+											  [-3,4],[4,12],[-15,12],
+											  [-4,6],[6,14],[-16,14],
+											  [-11,0],[-23,8],
+											  [2,4],[10,12],
+											  [-6,6],[-18,14],											  
+											  [-10,1],[1,9],[-22,9],
+											  [1,3],[3,11],[9,11],
+											  [3,5],[5,13],[11,13],
+											  [5,7],[13,15],
+											  [-7,7],[7,15],[-19,15]],
+							}		
+
+
+
+
+
+
+// if ( i > 0 && usedObject.usedFace.number == previousFace)
+			// {		
+				// var zerobottom2 = false;
+				// var zerotop2 = false;
+				// if(countZeroScalars01 != 0 && p0_scalarY == 0  && p1_scalarY == 0)
+				// {
+					// // уже не первый объект с 0 нижними скалярами => уже удалена нижняя...
+					// // запомиинаем
+					// var index0 = object.edge[ lastLineBot ][0];
+					// var index1 = object.edge[ lastLineBot ][1];
+					// // удаляем последнюю грань
+					// object.edge.splice( lastLineBot, 1 );
+					// // добавляем новые нижнии грани
+					// object.edge.push([index0, object.vertex.length - 4],[object.vertex.length - 3,index1]);
+					// testEdge(object.vertex[object.vertex.length - 3],object.vertex[index0]);
+					// lastLineBot = object.edge.length - 1;
+					// zerobottom2 = true;
+				// }
+				// else //standard way 
+				// {						
+					// if ( p0_scalarY == 0  && p1_scalarY == 0 ) 
+						// for (var k = 0; k < object.edge.length; k++)
+						// {
+							// var index0 = object.edge[k][0];
+							// var index1 = object.edge[k][1];
+
+							// if( (index0 == foundObjects[i].point1vertexNum && index1 == foundObjects[i].point2vertexNum) || 
+								// (index0 == foundObjects[i].point2vertexNum && index1 == foundObjects[i].point1vertexNum))
+								// {
+									// object.edge.splice( k, 1 );	
+									// object.edge.push([index0, object.vertex.length - 4],[object.vertex.length - 3,index1]);	
+									// zerobottom2 = true;
+									// countZeroScalars01++;
+								// }						
+						// }
+					// else { // build |_|
+						// object.edge.push( [object.vertex.length - 2, object.vertex.length - 4],
+										  // [object.vertex.length - 4, object.vertex.length - 3],
+										  // [object.vertex.length - 3, object.vertex.length - 1] );	
+					// }
+				// }
+									
+				// if(countZeroScalars23 != 0 && p2_scalarY == 0  && p3_scalarY == 0)
+				// {
+					// // уже не первый объект с 0 нижними скалярами => уже удалена нижняя...
+					// var index0 = object.edge[ lastLineTop ][0];
+					// var index1 = object.edge[ lastLineTop ][1];
+					// // удаляем последнюю грань
+					// object.edge.splice( lastLineTop, 1 );
+					// // добавляем новые нижнии грани
+					// object.edge.push([index0, object.vertex.length - 4],[object.vertex.length - 3,index1]);
+					// lastLineTop = object.edge.length - 1;
+					// zerobottom2 = true;
+				
+				// }
+				// else //standard
+				// {
+					// if ( p2_scalarY == 0  && p3_scalarY == 0 ) 
+						// for (var k = 0; k< object.edge.length; k++)
+						// {
+							// var index0 = object.edge[k][0];
+							// var index1 = object.edge[k][1];
+
+							// if( (index0 == foundObjects[i].point3vertexNum && index1 == foundObjects[i].point4vertexNum) || 
+								// (index0 == foundObjects[i].point4vertexNum && index1 == foundObjects[i].point3vertexNum))
+								// {
+									// object.edge.splice( k, 1 );
+									// object.edge.push([index1, object.vertex.length - 2],[index0, object.vertex.length - 1]);
+									// lastLineTop = object.edge.length - 1;
+									// zerotop2 = true;
+									// countZeroScalars23++;
+								// }
+						// }
+					// if ( zerobottom2  && !zerotop2 ){ object.edge.push( [object.vertex.length - 2, object.vertex.length - 4],
+																		// [object.vertex.length - 2, object.vertex.length - 1],
+																		// [object.vertex.length - 3, object.vertex.length - 1] ); }
+					// if ( zerobottom2 && zerotop2 ) { object.edge.push( [object.vertex.length - 2, object.vertex.length - 4],
+																	   // [object.vertex.length - 3, object.vertex.length - 1] ); }
+					// if ( !zerobottom2 && !zerotop2 ) { 
+						// object.edge.push( [object.vertex.length - 2, object.vertex.length - 1] ); }
+				// }
+				
+				// continue;
+			// }
+			// else
+			// {
+				countZeroScalars01 = 0;
+				countZeroScalars23 = 0;
+				previousFace = usedObject.usedFace.number;
+				//TODO : нужно вынести это в отдельный цикл, где я сначала сосчитаю все объекты со скалярами 0, а потом уже сделаю edges
+				//lets delete edges if scalars == 0 => means that points are on the existing edges
+				var zerobottom = false;
+				var zerotop = false;
+				if ( p0_scalarY == 0  && p1_scalarY == 0 ) 
+					for (var k = 0; k< object.edge.length; k++)
+					{
+						var index0 = object.edge[k][0];
+						var index1 = object.edge[k][1];
+
+						if( (index0 == foundObjects[i].point1vertexNum && index1 == foundObjects[i].point2vertexNum) || 
+							(index0 == foundObjects[i].point2vertexNum && index1 == foundObjects[i].point1vertexNum))
+							{
+								//object.edge.splice( k, 1 );	
+								//object.edge.push([index0, object.vertex.length - 4],[object.vertex.length - 3,index1]);
+								lastLineBot = object.edge.length - 1;
+								
+								zerobottom = true;
+								countZeroScalars01++;
+							}						
+					}
+				else { // build |_|
+					object.edge.push( [object.vertex.length - 2, object.vertex.length - 4],
+									  [object.vertex.length - 4, object.vertex.length - 3],
+									  [object.vertex.length - 3, object.vertex.length - 1] );
+				}
+				
+				if ( p2_scalarY == 0  && p3_scalarY == 0 ) 
+					for (var k = 0; k< object.edge.length; k++)
+					{
+						var index0 = object.edge[k][0];
+						var index1 = object.edge[k][1];
+
+						if( (index0 == foundObjects[i].point3vertexNum && index1 == foundObjects[i].point4vertexNum) || 
+							(index0 == foundObjects[i].point4vertexNum && index1 == foundObjects[i].point3vertexNum))
+							{
+								//object.edge.splice( k, 1 );
+								//object.edge.push([index1, object.vertex.length - 2],[index0, object.vertex.length - 1]);
+								lastLineTop = object.edge.length - 1;
+								zerotop = true;
+								countZeroScalars23++;
+							}
+					}
+				
+				if ( zerobottom  && !zerotop ){ object.edge.push( [object.vertex.length - 2, object.vertex.length - 4],
+																  [object.vertex.length - 2, object.vertex.length - 1],
+																  [object.vertex.length - 3, object.vertex.length - 1] ); }
+				if ( zerobottom && zerotop ) {	object.edge.push( [object.vertex.length - 2, object.vertex.length - 4],
+																  [object.vertex.length - 3, object.vertex.length - 1] ); }
+				if ( !zerobottom && !zerotop ) { 
+					object.edge.push( [object.vertex.length - 2, object.vertex.length - 1] ); }					
+			//}					
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function rotate()
+	{
+		scope.DoorMesh.rotateOnAxis(new THREE.Vector3(0,1,0), Math.PI/180 ); //1 градус
+		switch ( scope.status )
+		{
+			case scope.options.closed : scope.rotateTimes ++;
+										if ( scope.rotateTimes <= 89 )
+											requestAnimationFrame(rotate);
+										else  
+										{
+											//scope.rotateTimes = 0;
+											scope.status = scope.options.opened;
+										} break;
+			case scope.options.opened : scope.rotateTimes --;
+										if ( scope.rotateTimes != 0 )
+											requestAnimationFrame(rotate);
+										else  
+										{
+											//scope.rotateTimes = 0;
+											scope.status = scope.options.closed;
+										} break;
+		}
+	}			
