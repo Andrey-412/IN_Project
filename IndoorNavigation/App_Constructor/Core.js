@@ -297,7 +297,10 @@ IndoorNavigation.Logger = function ()
     }
 
     this.LogSet = function (text) {
-        $("#InfoText").html(text);
+        //$("#InfoText").html(text);
+        $("#NetworkItemInfo > div").html(text);
+        if (text != "Null") IndoorNavigation.Core.API.ShowInfoBox(true);           
+        else IndoorNavigation.Core.API.ShowInfoBox(false);
     }
 
     this.ClearLog = function()
@@ -2745,7 +2748,7 @@ IndoorNavigation.NetworkModule.Computer = function ( data, object )
 	            var intersect_another = ray.intersectObject(INTERSECTED_Network);
 	            if (intersect_another.length == 0) {
 	                INTERSECTED_Network = null;
-	                IndoorNavigation.Core.Logger.LogSet("None");
+	                IndoorNavigation.Core.Logger.LogSet("Null");
 	            }
 	        }
 	}
@@ -3034,7 +3037,7 @@ IndoorNavigation.WiresModule = function()
 
     this.deleteWire = function()
     {
-
+        //TODO
     }
 	
 }
@@ -3579,6 +3582,13 @@ IndoorNavigation.API = function()
 
     }
 
+    this.ShowInfoBox = function(status)
+    {
+        if (status)
+            $('#NetworkItemInfo').fadeIn('fast');
+        else
+            $('#NetworkItemInfo').fadeOut();
+    }
 }
 
 
