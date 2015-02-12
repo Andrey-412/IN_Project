@@ -2671,7 +2671,7 @@ IndoorNavigation.NetworkModule.Door = function ( data, object )
 		
         testVertex2(scope.position);
 
-		
+        LoadModel();
 	}
 	
 	function testVertex2( position )
@@ -2681,6 +2681,25 @@ IndoorNavigation.NetworkModule.Door = function ( data, object )
 		var vertexMesh = new THREE.Mesh(vertexGeometry, vertexMaterial);
 		vertexMesh.position.set( position.x, position.y, position.z );
 		IndoorNavigation.mainScene.add(vertexMesh);
+	}
+
+	function LoadModel() {
+	    // instantiate a loader
+	    var loader = new THREE.ColladaLoader();
+
+	    // load a Babylon resource
+	    loader.load(
+            // resource URL
+            '/App_Constructor/Objects/MARKER.dae',
+            // Function when resource is loaded
+            function (collada) {
+                IndoorNavigation.mainScene.add(collada.scene);
+            },
+            // Function called when download progresses
+            function (xhr) {
+                console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+            }
+        );
 	}
 
 	this.updateItem = function () { }
@@ -3115,7 +3134,7 @@ IndoorNavigation.Wire = function (markersPositions) {
                                   "gl_FragColor = vec4( glow, 1.0 );",
                               "}"].join("\n"),
             side: THREE.FrontSide,
-            alphaTest: 0.9,
+            //alphaTest: 0.9,
             blending: THREE.AdditiveBlending,
             transparent: true
         });
