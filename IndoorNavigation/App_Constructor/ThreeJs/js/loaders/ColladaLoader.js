@@ -150,7 +150,7 @@ THREE.ColladaLoader = function () {
 		skins = [];
 
 		visualScene = parseScene();
-		scene = new THREE.Group();
+		scene = new THREE.Object3D();
 
 		for ( var i = 0; i < visualScene.nodes.length; i ++ ) {
 
@@ -2060,7 +2060,7 @@ THREE.ColladaLoader = function () {
 		this.id = "";
 		this.name = "";
 		this.nodes = [];
-		this.scene = new THREE.Group();
+		this.scene = new THREE.Object3D();
 
 	};
 

@@ -2669,7 +2669,7 @@ IndoorNavigation.NetworkModule.Door = function ( data, object )
         var rotation = new THREE.Euler().setFromQuaternion(arrow.quaternion);
 		
 		
-        testVertex2(scope.position);
+        //testVertex2(scope.position);
 
         LoadModel();
 	}
@@ -2690,9 +2690,13 @@ IndoorNavigation.NetworkModule.Door = function ( data, object )
 	    // load a Babylon resource
 	    loader.load(
             // resource URL
-            '/App_Constructor/Objects/MARKER.dae',
+            '/App_Constructor/Objects/MARKER.xml',
             // Function when resource is loaded
             function (collada) {
+                scope.object = collada;
+                collada.scene.children[0].children[0].scale.set(25, 25, 25);
+                collada.scene.position.set(scope.position.x, scope.position.y, scope.position.z);
+                collada.scene.rotateOnAxis(new THREE.Vector3(0,1,0), Math.PI/2);
                 IndoorNavigation.mainScene.add(collada.scene);
             },
             // Function called when download progresses
@@ -2702,7 +2706,7 @@ IndoorNavigation.NetworkModule.Door = function ( data, object )
         );
 	}
 
-	this.updateItem = function () { }
+	this.updateItem = function () { scope.object.scene.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI / 180); }
 }
 
 IndoorNavigation.NetworkModule.Computer = function ( data, object )
