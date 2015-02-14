@@ -1,6 +1,7 @@
 ﻿var IndoorNavigation = { Version: "0.0.1" , Started: "25.09.2014", By: "NAFAW", mainScene: "undefined", Core: "undefined" };
-var INTERSECTED; // furniture
+var INTERSECTED_Furniture; //FurnitureModule
 var INTERSECTED_Network; //NetworkModule
+var INTERSECTED_Wall; //BuildingModule
 
 IndoorNavigation.Core = function( container , initHelpers )
 {
@@ -132,7 +133,7 @@ IndoorNavigation.Core = function( container , initHelpers )
 		event.preventDefault();
 		
 		switch (event.which) {
-			case 1: if ( INTERSECTED ) INTERSECTED.dispatchEvent({type:'open'}); break;
+			case 1: if ( INTERSECTED_Furniture ) INTERSECTED_Furniture.dispatchEvent({type:'open'}); break;
 			case 2: 
 				//Middle Mouse button pressed.
 				break;
@@ -519,7 +520,8 @@ IndoorNavigation.BuildingModule = function()
 		for (var i = 0; i < this.floors.length; i++) 
 		{
 			if (this.floors[i].number == floorNumber) {
-				this.floors[i].FloorMesh.visible = !this.floors[i].FloorMesh.visible;
+			    this.floors[i].FloorMesh.visible = !this.floors[i].FloorMesh.visible;
+			    this.floors[i].needsUpdate = !this.floors[i].needsUpdate;
 				return;
 			}
 		}		
@@ -527,10 +529,14 @@ IndoorNavigation.BuildingModule = function()
 
 	this.makeFloorTransparent = function ( floorNumber )
 	{
+        //find Floor
 		for (var i = 0; i < this.floors.length; i++) 
 		{
 			if (this.floors[i].number == floorNumber) {
-				var objects = this.floors[i].FloorMesh.children;
+			    var objects = this.floors[i].FloorMesh.children;
+			    if (!this.floors[i].FloorMesh.visible) return; //кнопка не должна быть доступна если этаж скрыт
+			    this.floors[i].needsUpdate = !this.floors[i].needsUpdate; // отключить проверку стен если мы сделали этаж прозрачным
+                //TODO сделать кнопку скрыть этаж недоступной? если она доступна то нужно не включать апдейт при скрытии когда стены уже прозрачны.
 				break;
 			}
 		}	
@@ -539,7 +545,7 @@ IndoorNavigation.BuildingModule = function()
 		{
 		    if (objects[j].name.indexOf("vertexMesh") == -1 && objects[j].name.indexOf("edgeMesh") == -1) {
 		        //objects[j].material.transparent = !objects[j].material.transparent;
-                // Изменил прозрачность на видимость, чтобы все было видно...
+                // Изменил прозрачность на видимость, чтобы все было видно... + без артифактов
 		        objects[j].visible = !objects[j].visible;
 		    }
 		}
@@ -597,14 +603,44 @@ IndoorNavigation.BuildingModule = function()
 
 IndoorNavigation.BuildingModule.Floor = function ( data )
 {
-	var scope = this;
+    var scope = this;
+
+    this.needsUpdate = true; //Этаж должен быть обновлен
     this.number = data.Parameters.FloorNumber;
 	
-	this.updateFloor = function ()	{
-		var time = Date.now() / 1000;
-		//scope.FloorMesh.rotation.x = time * 0.5;
-		//scope.FloorMesh.rotation.y = time * 0.75;
-		//scope.FloorMesh.rotation.z = time * 1.0;
+    this.updateFloor = function () {    
+        //var time = Date.now() / 1000;
+        if (!this.needsUpdate) { INTERSECTED_Wall = null; return; } //TODO Проблема в этом решение что все остальные этажи, которые обновляются тоже получат null объект
+        // и можно будет подсветить предмет сквозь стену нижних этажей
+	    var vector = new THREE.Vector3(IndoorNavigation.Core.mouse.x, IndoorNavigation.Core.mouse.y, 1);
+	    IndoorNavigation.Core.projector.unprojectVector(vector, IndoorNavigation.Core.camera);
+	    var ray = new THREE.Raycaster(IndoorNavigation.Core.camera.position,
+            vector.sub(IndoorNavigation.Core.camera.position).normalize());
+	        
+	    //var info = "";
+
+	    //var t0 = performance.now();
+	    //var intersects = ray.intersectObjects(scope.FloorMesh.children);
+	    //var t1 = performance.now();
+	    //info += "WholeFloorMesh " + (t1 - t0).toFixed(5) + " milliseconds.</br>";
+
+	    //t0 = performance.now();
+	    var intersects = ray.intersectObjects(scope.OnlyWallMeshes);
+	    //t1 = performance.now();
+	    //info += "OnlyWallMeshes " + (t1 - t0).toFixed(5) + " milliseconds.</br>";
+
+	    if (intersects.length > 0) {
+	        if (intersects[0].object != INTERSECTED_Wall) {
+	            INTERSECTED_Wall = intersects[0].object;
+	        }
+	    }
+	    else
+	        if (INTERSECTED_Wall != null) {
+	            var intersect_another = ray.intersectObject(INTERSECTED_Wall);
+	            if (intersect_another.length == 0) {
+	                INTERSECTED_Network = null;
+	            }
+	        }
 	}
 	
 	// test event function
@@ -676,7 +712,8 @@ IndoorNavigation.BuildingModule.Floor = function ( data )
     {
         //scope.FloorMesh = DataToFloor(data);
 		//scope.FloorMesh = SmartDataToFloor(data);
-		scope.FloorMesh = new THREE.Object3D();		
+        scope.FloorMesh = new THREE.Object3D();
+        scope.OnlyWallMeshes = []; // for perfomance cases in updateFloor ( decrease number of objects to look for in Ray Vector )
 		scope.FloorMesh.name = scope.number;
 		
 		for ( var i = 0; i < data.Rooms.length; i++ )
@@ -1417,6 +1454,7 @@ IndoorNavigation.BuildingModule.Floor = function ( data )
 
 			geometry.computeFaceNormals();
 			geometry.computeVertexNormals();
+			//geometry.computeBoundingBox(); //Remark
 
 			if ( object.materials.outside[0] == true)
 			{
@@ -1424,9 +1462,10 @@ IndoorNavigation.BuildingModule.Floor = function ( data )
 				var Obj_opacity = object.materials.outside[2];
 				var faceMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: THREE.FaceColors, side: Obj_side, transparent: tt, opacity: Obj_opacity });
 				faces = new THREE.Mesh(geometry, faceMaterial);
-				faces.name = object.name + "-facesMesh";
+				faces.name = object.name + "-wallMesh";
 				faces.scale.multiplyScalar(1.001);
 				AllMeshes.add(faces);
+				scope.OnlyWallMeshes.push(faces);
 			}
 			
 			if ( object.materials.inside[0] == true)
@@ -1466,6 +1505,7 @@ IndoorNavigation.BuildingModule.Floor = function ( data )
 				faces.name = object.name + "-bottomMesh";
 				faces.scale.multiplyScalar(1.001);
 				AllMeshes.add(faces);
+				scope.OnlyWallMeshes.push(faces);
 			}
 		}
 		
@@ -1498,7 +1538,6 @@ IndoorNavigation.BuildingModule.Floor = function ( data )
 				AllMeshes.add(faces);
 			}
 		}		
-	
 	}	
 
     // возможно потом будут какие-нить интерактивные команды...
@@ -2354,23 +2393,23 @@ IndoorNavigation.FurnitureModule.DoorType1 = function ( data, object )
 		var intersects = ray.intersectObject( scope.DoorMesh );
 
 	    // проверяем пересечение, если его нет ,то нужно убедиться не пересекается ли старый объект... 
-	    //чтобы INTERSECTED не обнулился просто так и можно было с ним взаимодействовать
+	    //чтобы INTERSECTED_Furniture не обнулился просто так и можно было с ним взаимодействовать
 		if ( intersects.length > 0 )
 		{
-			if ( intersects[ 0 ].object != INTERSECTED ) 
+			if ( intersects[ 0 ].object != INTERSECTED_Furniture ) 
 			{
-				INTERSECTED = intersects[ 0 ].object;
+				INTERSECTED_Furniture = intersects[ 0 ].object;
 			}
 		} 
 		else		
-			if ( INTERSECTED != null ) 
+			if ( INTERSECTED_Furniture != null ) 
 			{
-				var intersect_another = ray.intersectObject ( INTERSECTED );
-				if ( intersect_another.length == 0 )  INTERSECTED = null;
+				var intersect_another = ray.intersectObject ( INTERSECTED_Furniture );
+				if ( intersect_another.length == 0 )  INTERSECTED_Furniture = null;
 			}
 		// else // there are no intersections
 		// {
-			// INTERSECTED = null;
+			// INTERSECTED_Furniture = null;
 		// }
 	}
 	
@@ -2502,16 +2541,16 @@ IndoorNavigation.FurnitureModule.WindowType1 = function ( data, object )
 
 		if ( intersects.length > 0 )
 		{
-			if ( intersects[ 0 ].object != INTERSECTED ) 
+			if ( intersects[ 0 ].object != INTERSECTED_Furniture ) 
 			{
-				INTERSECTED = intersects[ 0 ].object;
+				INTERSECTED_Furniture = intersects[ 0 ].object;
 			}
 		}
 		else		
-			if ( INTERSECTED != null ) 
+			if ( INTERSECTED_Furniture != null ) 
 			{
-				var intersect_another = ray.intersectObject ( INTERSECTED );
-				if ( intersect_another.length == 0 )  INTERSECTED = null;
+				var intersect_another = ray.intersectObject ( INTERSECTED_Furniture );
+				if ( intersect_another.length == 0 )  INTERSECTED_Furniture = null;
 			}
 
 	}
@@ -2753,12 +2792,27 @@ IndoorNavigation.NetworkModule.Computer = function ( data, object )
 
 	}
 
-	this.updateItem = function(ray) {
-
-	    var intersects = ray.intersectObject(scope.ComputerMesh);
+	this.updateItem = function (ray) {
+	    // проверка на то что мы не пересекаем мышкой стенку, которая стоит перед предметом.
+	    if (INTERSECTED_Wall == null)
+	        var intersects = ray.intersectObject(scope.ComputerMesh);
+	    else
+	        var intersects = ray.intersectObjects([scope.ComputerMesh, INTERSECTED_Wall]);
 	            
 	    if ( intersects.length > 0 )
 	    {
+            // если первый объект который мы встретили стена - выйти.
+	        if (intersects[0].object == INTERSECTED_Wall) {
+	            if (INTERSECTED_Network != null) {
+	                var intersect_another = ray.intersectObject(INTERSECTED_Network);
+	                if (intersect_another.length == 0) {
+	                    INTERSECTED_Network = null;
+	                    IndoorNavigation.Core.Logger.LogSet("Null");
+	                }
+	            }
+	            return;
+	        }
+
 	        if (intersects[0].object != INTERSECTED_Network)
 	        {
 	            INTERSECTED_Network = intersects[0].object;            
@@ -3610,7 +3664,8 @@ IndoorNavigation.API = function()
         if (status)
             $('#NetworkItemInfo').fadeIn('fast');
         else
-            $('#NetworkItemInfo').fadeOut();
+            if ($('#NetworkItemInfo').css('display') != 'none')
+                $('#NetworkItemInfo').fadeOut();
     }
 }
 
