@@ -2,6 +2,7 @@
 var INTERSECTED_Furniture; //FurnitureModule
 var INTERSECTED_Network; //NetworkModule
 var INTERSECTED_Wall; //BuildingModule
+var INTERSECTED_Marker; 
 
 IndoorNavigation.Core = function( container , initHelpers )
 {
@@ -133,7 +134,10 @@ IndoorNavigation.Core = function( container , initHelpers )
 		event.preventDefault();
 		
 		switch (event.which) {
-			case 1: if ( INTERSECTED_Furniture ) INTERSECTED_Furniture.dispatchEvent({type:'open'}); break;
+		    case 1:
+		        if (INTERSECTED_Furniture) INTERSECTED_Furniture.dispatchEvent({ type: 'open' });
+		        if (INTERSECTED_Marker) moveCameraSlowly();
+		        break;
 			case 2: 
 				//Middle Mouse button pressed.
 				break;
@@ -143,6 +147,15 @@ IndoorNavigation.Core = function( container , initHelpers )
 			default:
 				//You have a strange Mouse!
 		}
+	}
+
+	function moveCameraSlowly()
+	{
+	    while (scope.camera.position.distanceTo(INTERSECTED_Marker.position) > 500) {
+	        var direction = new THREE.Vector3().sub(INTERSECTED_Marker.position, scope.camera.position).normalize();
+	        scope.camera.position.add(direction.multiplyScalar(10));
+	        scope.camera.lookAt(INTERSECTED_Marker.position);
+	    }
 	}
 
 	
@@ -2729,14 +2742,21 @@ IndoorNavigation.NetworkModule.Door = function ( data, object )
 	    // load a Babylon resource
 	    loader.load(
             // resource URL
-            '/App_Constructor/Objects/MARKER.xml',
+            '/App_Constructor/Objects/MARKER1.xml',
             // Function when resource is loaded
             function (collada) {
                 scope.object = collada;
-                collada.scene.children[0].children[0].scale.set(25, 25, 25);
+                scope.mesh = collada.scene.children[0].children[0];
+                scope.mesh.scale.set(25, 25, 25);
                 collada.scene.position.set(scope.position.x, scope.position.y, scope.position.z);
-                collada.scene.rotateOnAxis(new THREE.Vector3(0,1,0), Math.PI/2);
+                collada.scene.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI / 2);
+                var markerTexture = THREE.ImageUtils.loadTexture('/App_Constructor/Objects/MARKER1.png');
+                var markerMaterial = new THREE.MeshLambertMaterial({ map: markerTexture, side: THREE.DoubleSide });
+                scope.mesh.material = markerMaterial;
                 IndoorNavigation.mainScene.add(collada.scene);
+                //var light = new THREE.PointLight(0xffffff);
+                //light.position.set(scope.position.x, scope.position.y + 50, scope.position.z);
+                //IndoorNavigation.mainScene.add(light);
             },
             // Function called when download progresses
             function (xhr) {
@@ -2745,7 +2765,24 @@ IndoorNavigation.NetworkModule.Door = function ( data, object )
         );
 	}
 
-	this.updateItem = function () { scope.object.scene.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI / 180); }
+	this.updateItem = function (ray) {
+	    //scope.object.scene.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI / 180);
+
+	    var intersects = ray.intersectObject(scope.mesh);
+
+	    if (intersects.length > 0) {
+	        if (intersects[0].object != INTERSECTED_Furniture) {
+	            INTERSECTED_Marker = intersects[0].object;
+	        }
+	        scope.object.scene.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI / 180);
+	    }
+	    else
+	        if (INTERSECTED_Marker != null) {
+	            var intersect_another = ray.intersectObject(INTERSECTED_Marker);
+	            if (intersect_another.length == 0) INTERSECTED_Marker = null;
+	        }
+
+	}
 }
 
 IndoorNavigation.NetworkModule.Computer = function ( data, object )
