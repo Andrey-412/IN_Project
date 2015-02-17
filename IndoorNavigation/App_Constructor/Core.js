@@ -94,6 +94,10 @@ IndoorNavigation.Core = function( container , initHelpers )
         update();
         updateModules();
         updateAPI();
+        
+        if (scope.MoveCamera) moveCameraSlowly();
+
+        scope.Logger.LogSet2(scope.camera.rotation.x + "/" + scope.camera.rotation.y + "/" + scope.camera.rotation.z);
     }
 
     function render() {
@@ -136,7 +140,12 @@ IndoorNavigation.Core = function( container , initHelpers )
 		switch (event.which) {
 		    case 1:
 		        if (INTERSECTED_Furniture) INTERSECTED_Furniture.dispatchEvent({ type: 'open' });
-		        if (INTERSECTED_Marker) moveCameraSlowly();
+		        if (INTERSECTED_Marker) {
+		            CreateCameraPath(scope.camera.position, INTERSECTED_Marker.matrixWorld.getPosition());//INTERSECTED_Marker.position);
+		            scope.Marker = INTERSECTED_Marker;
+		            //moveCameraSlowly(-1);
+		            scope.MoveCamera = true;
+		        }
 		        break;
 			case 2: 
 				//Middle Mouse button pressed.
@@ -151,11 +160,35 @@ IndoorNavigation.Core = function( container , initHelpers )
 
 	function moveCameraSlowly()
 	{
-	    while (scope.camera.position.distanceTo(INTERSECTED_Marker.position) > 500) {
-	        var direction = new THREE.Vector3().sub(INTERSECTED_Marker.position, scope.camera.position).normalize();
-	        scope.camera.position.add(direction.multiplyScalar(10));
-	        scope.camera.lookAt(INTERSECTED_Marker.position);
+	    if (scope.i < scope.PathPoints.length - 10) {
+	        scope.i++;
+	        var direction = new THREE.Vector3().sub(scope.Marker.position, scope.camera.position).normalize();
+	        //scope.camera.position.add(direction.multiplyScalar(10));
+	        scope.camera.position.copy(scope.PathPoints[scope.i]);
+	        //scope.camera.translate(new THREE.Vector3().sub(scope.PathPoints[scope.i], scope.camera.position).length(),
+            //   new THREE.Vector3().sub(scope.PathPoints[scope.i], scope.camera.position));
+            
+	        //scope.camera.up = new THREE.Vector3(0, 1, 0);
+	        //scope.camera.lookAt(scope.camera.worldToLocal(scope.Marker.matrixWorld.getPosition()));
+	        scope.camera.lookAt(scope.Marker.matrixWorld.getPosition());
+	        //requestAnimationFrame(function () { moveCameraSlowly(i); });
+	        //scope.Logger.LogSet(scope.Marker.matrixWorld.getPosition().x + "/" + scope.Marker.matrixWorld.getPosition().y + "/" + scope.Marker.matrixWorld.getPosition().z);
+	        scope.Logger.LogSet(scope.camera.rotation.x + "/" + scope.camera.rotation.y + "/" + scope.camera.rotation.z);
 	    }
+	    else {
+	        scope.cameraControl.center.copy(scope.Marker.matrixWorld.getPosition());
+	        scope.MoveCamera = false;
+	    }
+	        
+
+	}
+
+	function CreateCameraPath(pos1, pos2)
+	{
+	    var curve = new THREE.SplineCurve3([pos1, pos2]);
+	    scope.PathPoints = curve.getPoints(50);
+	    scope.i = -1;
+	    var wire = new IndoorNavigation.Wire([pos1, pos2]);
 	}
 
 	
@@ -315,6 +348,10 @@ IndoorNavigation.Logger = function ()
         $("#NetworkItemInfo > div").html(text);
         if (text != "Null") IndoorNavigation.Core.API.ShowInfoBox(true);           
         else IndoorNavigation.Core.API.ShowInfoBox(false);
+    }
+
+    this.LogSet2 = function (text) {
+        $("#NetworkItemInfo > p").html(text);
     }
 
     this.ClearLog = function()
@@ -2749,13 +2786,15 @@ IndoorNavigation.NetworkModule.Door = function ( data, object )
                 scope.mesh = collada.scene.children[0].children[0];
                 scope.mesh.scale.set(25, 25, 25);
                 collada.scene.position.set(scope.position.x, scope.position.y, scope.position.z);
-                collada.scene.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI / 2);
+                //collada.scene.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI / 2);
                 var markerTexture = THREE.ImageUtils.loadTexture('/App_Constructor/Objects/MARKER1.png');
                 var markerMaterial = new THREE.MeshLambertMaterial({ map: markerTexture, side: THREE.DoubleSide });
                 scope.mesh.material = markerMaterial;
                 IndoorNavigation.mainScene.add(collada.scene);
-                //var light = new THREE.PointLight(0xffffff);
+                //var light = new THREE.PointLight(0xffffff, 0.5, 1500);
+                //var light = new THREE.PointLight(0x000000, 50, 500);
                 //light.position.set(scope.position.x, scope.position.y + 50, scope.position.z);
+                //light.position.set(0,500,0);
                 //IndoorNavigation.mainScene.add(light);
             },
             // Function called when download progresses
@@ -2766,23 +2805,81 @@ IndoorNavigation.NetworkModule.Door = function ( data, object )
 	}
 
 	this.updateItem = function (ray) {
-	    //scope.object.scene.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI / 180);
-
 	    var intersects = ray.intersectObject(scope.mesh);
 
 	    if (intersects.length > 0) {
 	        if (intersects[0].object != INTERSECTED_Furniture) {
 	            INTERSECTED_Marker = intersects[0].object;
 	        }
-	        scope.object.scene.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI / 180);
+	        //scope.object.scene.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI / 180 * 4);
+	        createGlow();
+	        scope.mesh.rotateOnAxis(new THREE.Vector3(0, 0, 1), Math.PI / 180 * 4);
+	        //scope.Glow.rotateOnAxis(new THREE.Vector3(0, 0, 1), Math.PI / 180 * 4);
+	        //scope.Glow.rotation.copy(scope.mesh.rotation);
+	        scope.Glow.rotation.z = scope.mesh.rotation.z;
 	    }
-	    else
+	    else {
+
+	        deleteGlow();
+
 	        if (INTERSECTED_Marker != null) {
 	            var intersect_another = ray.intersectObject(INTERSECTED_Marker);
 	            if (intersect_another.length == 0) INTERSECTED_Marker = null;
 	        }
+	    }
 
 	}
+
+	function createGlow()
+	{
+	    if (scope.Glow != null) return;
+	    var customMaterial = new THREE.ShaderMaterial(
+        {
+            uniforms:
+            {
+                "c": { type: "f", value: 1.0 },
+                "p": { type: "f", value: 1.4 },
+                glowColor: { type: "c", value: new THREE.Color(0x515edb) },
+                viewVector: { type: "v3", value: IndoorNavigation.Core.camera.position }
+            },
+            vertexShader: ["uniform vec3 viewVector;",
+                            "uniform float c;",
+                            "uniform float p;",
+                            "varying float intensity;",
+                            "void main()",
+                            "{",
+                                "vec3 vNormal = normalize( normalMatrix * normal );",
+                                "vec3 vNormel = normalize( normalMatrix * viewVector );",
+                                "intensity = 1.0; //pow( c - dot(vNormal, vNormel), p );",
+                                "gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+                            "}"].join("\n"),
+            fragmentShader: ["uniform vec3 glowColor;",
+                              "varying float intensity;",
+                              "void main()",
+                              "{",
+                                  "vec3 glow = glowColor * intensity;",
+                                  "gl_FragColor = vec4( glow, 1.0 );",
+                              "}"].join("\n"),
+            side: THREE.FrontSide,
+            //alphaTest: 0.9,
+            blending: THREE.AdditiveBlending,
+            transparent: true
+        });
+	    scope.Glow = new THREE.Mesh(scope.mesh.geometry, customMaterial);
+	    scope.Glow.position.set(scope.position.x, scope.position.y, scope.position.z);
+	    scope.Glow.rotateOnAxis(new THREE.Vector3(1, 0, 0), -Math.PI / 180 * 90);
+	    //scope.Glow.rotateOnAxis(new THREE.Vector3(0, 0, 1), Math.PI / 2);
+	    //scope.Glow.applyMatrix(scope.mesh.matrix);
+	    scope.Glow.scale.set(35,35,25);
+	    IndoorNavigation.mainScene.add(scope.Glow);
+	}
+    
+	function deleteGlow()
+	{
+	    IndoorNavigation.mainScene.remove(scope.Glow);
+	    scope.Glow = null;
+	}
+	
 }
 
 IndoorNavigation.NetworkModule.Computer = function ( data, object )

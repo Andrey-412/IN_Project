@@ -662,7 +662,7 @@ var wiresModule = new IndoorNavigation.WiresModule().addCollection(this.WIRES.Te
 
 
 //Core.API.CreatePath(networkModule.markersPos);
-Core.API.CreatePathTest(networkModule.markersPos);
+//Core.API.CreatePathTest(networkModule.markersPos);
 
 Core.animate();
 
