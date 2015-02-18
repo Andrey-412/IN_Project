@@ -25,6 +25,7 @@ IndoorNavigation.Core = function( container , initHelpers )
         scope.scene = new THREE.Scene();
         scope.scene.add(new THREE.AmbientLight(0x727272));
 
+        // set FOV = 100 = > better vision
         scope.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 30000); //0.1, 20000
         scope.camera.position.set(0, 950, 1800);
 
@@ -90,14 +91,14 @@ IndoorNavigation.Core = function( container , initHelpers )
 
         requestAnimationFrame(animate);
 
+        if (scope.MoveCamera) moveCameraSlowly();
+
         render();
         update();
         updateModules();
         updateAPI();
         
-        if (scope.MoveCamera) moveCameraSlowly();
-
-        scope.Logger.LogSet2(scope.camera.rotation.x + "/" + scope.camera.rotation.y + "/" + scope.camera.rotation.z);
+        //scope.Logger.LogSet2(scope.camera.rotation.x + "/" + scope.camera.rotation.y + "/" + scope.camera.rotation.z);
     }
 
     function render() {
@@ -140,11 +141,11 @@ IndoorNavigation.Core = function( container , initHelpers )
 		switch (event.which) {
 		    case 1:
 		        if (INTERSECTED_Furniture) INTERSECTED_Furniture.dispatchEvent({ type: 'open' });
-		        if (INTERSECTED_Marker) {
-		            CreateCameraPath(scope.camera.position, INTERSECTED_Marker.matrixWorld.getPosition());//INTERSECTED_Marker.position);
+		        if (INTERSECTED_Marker) {		            
 		            scope.Marker = INTERSECTED_Marker;
-		            //moveCameraSlowly(-1);
+		            scope.MarkerWorldPosition = INTERSECTED_Marker.matrixWorld.getPosition();
 		            scope.MoveCamera = true;
+		            CreateCameraPath(scope.camera.position, scope.MarkerWorldPosition);//INTERSECTED_Marker.position);	            
 		        }
 		        break;
 			case 2: 
@@ -159,36 +160,40 @@ IndoorNavigation.Core = function( container , initHelpers )
 	}
 
 	function moveCameraSlowly()
-	{
-	    if (scope.i < scope.PathPoints.length - 10) {
+	{    
+	    if (scope.i < scope.PathPoints.length - 5) {
 	        scope.i++;
 	        var direction = new THREE.Vector3().sub(scope.Marker.position, scope.camera.position).normalize();
 	        //scope.camera.position.add(direction.multiplyScalar(10));
 	        scope.camera.position.copy(scope.PathPoints[scope.i]);
 	        //scope.camera.translate(new THREE.Vector3().sub(scope.PathPoints[scope.i], scope.camera.position).length(),
-            //   new THREE.Vector3().sub(scope.PathPoints[scope.i], scope.camera.position));
-            
+	        //   new THREE.Vector3().sub(scope.PathPoints[scope.i], scope.camera.position));
+
 	        //scope.camera.up = new THREE.Vector3(0, 1, 0);
 	        //scope.camera.lookAt(scope.camera.worldToLocal(scope.Marker.matrixWorld.getPosition()));
-	        scope.camera.lookAt(scope.Marker.matrixWorld.getPosition());
+	        scope.camera.lookAt(scope.MarkerWorldPosition);
+	        var direction = new THREE.Vector3().sub(scope.MarkerWorldPosition, scope.initialCenter.clone());
+	        scope.cameraControl.center.add(direction.multiplyScalar(1 / (scope.PathPoints.length - 3))); // методом проб и ошибок нашли цифру))
+	        scope.cameraControl.update();
 	        //requestAnimationFrame(function () { moveCameraSlowly(i); });
 	        //scope.Logger.LogSet(scope.Marker.matrixWorld.getPosition().x + "/" + scope.Marker.matrixWorld.getPosition().y + "/" + scope.Marker.matrixWorld.getPosition().z);
-	        scope.Logger.LogSet(scope.camera.rotation.x + "/" + scope.camera.rotation.y + "/" + scope.camera.rotation.z);
+	        //scope.Logger.LogSet(scope.camera.rotation.x + "/" + scope.camera.rotation.y + "/" + scope.camera.rotation.z);
 	    }
 	    else {
-	        scope.cameraControl.center.copy(scope.Marker.matrixWorld.getPosition());
 	        scope.MoveCamera = false;
+	        //scope.cameraControl.center.copy(scope.MarkerWorldPosition);
+	        scope.cameraControl.update();
 	    }
-	        
-
 	}
 
 	function CreateCameraPath(pos1, pos2)
 	{
+	    pos2.y += 100;
 	    var curve = new THREE.SplineCurve3([pos1, pos2]);
 	    scope.PathPoints = curve.getPoints(50);
 	    scope.i = -1;
-	    var wire = new IndoorNavigation.Wire([pos1, pos2]);
+	    scope.initialCenter = scope.cameraControl.center.clone();
+	    //var wire = new IndoorNavigation.Wire([pos1, pos2]);
 	}
 
 	
@@ -524,7 +529,7 @@ IndoorNavigation.Module = function ( name, version, enabled )
 
 
 ///////////////////////////////////////////////////////////
-/////////////////// BUILDING MODULE //////////////////////
+/////////////////// BUILDING MODULE ///////////////////////
 ///////////////////////////////////////////////////////////
 
 IndoorNavigation.BuildingModule = function()
