@@ -2,7 +2,7 @@
 var INTERSECTED_Furniture; //FurnitureModule
 var INTERSECTED_Network; //NetworkModule
 var INTERSECTED_Wall; //BuildingModule
-var INTERSECTED_Marker; 
+var INTERSECTED_Marker; // marker для путей.
 
 IndoorNavigation.Core = function( container , initHelpers )
 {
