@@ -44,6 +44,7 @@ IndoorNavigation.Core = function( container , initHelpers )
 
         scope.container = document.getElementById(container);
         scope.container.appendChild(scope.renderer.domElement);
+        scope.renderer.domElement.removeAttribute("style");
 
         scope.clock = new THREE.Clock();
     }
@@ -91,7 +92,7 @@ IndoorNavigation.Core = function( container , initHelpers )
 
         requestAnimationFrame(animate);
 
-        if (scope.MoveCamera) moveCameraSlowly();
+        //if (scope.MoveCamera) moveCameraSlowly();
 
         render();
         update();
@@ -140,12 +141,14 @@ IndoorNavigation.Core = function( container , initHelpers )
 		
 		switch (event.which) {
 		    case 1:
+                //Left Mouse button pressed.
 		        if (INTERSECTED_Furniture) INTERSECTED_Furniture.dispatchEvent({ type: 'open' });
 		        if (INTERSECTED_Marker) {		            
 		            scope.Marker = INTERSECTED_Marker;
 		            scope.MarkerWorldPosition = INTERSECTED_Marker.matrixWorld.getPosition();
 		            scope.MoveCamera = true;
-		            CreateCameraPath(scope.camera.position, scope.MarkerWorldPosition);//INTERSECTED_Marker.position);	            
+		            CreateCameraPath(scope.camera.position, scope.MarkerWorldPosition);//INTERSECTED_Marker.position);	
+		            moveCameraSlowly();
 		        }
 		        break;
 			case 2: 
@@ -175,7 +178,7 @@ IndoorNavigation.Core = function( container , initHelpers )
 	        var direction = new THREE.Vector3().sub(scope.MarkerWorldPosition, scope.initialCenter.clone());
 	        scope.cameraControl.center.add(direction.multiplyScalar(1 / (scope.PathPoints.length - 3))); // методом проб и ошибок нашли цифру))
 	        scope.cameraControl.update();
-	        //requestAnimationFrame(function () { moveCameraSlowly(i); });
+	        requestAnimationFrame(function () { moveCameraSlowly(); });
 	        //scope.Logger.LogSet(scope.Marker.matrixWorld.getPosition().x + "/" + scope.Marker.matrixWorld.getPosition().y + "/" + scope.Marker.matrixWorld.getPosition().z);
 	        //scope.Logger.LogSet(scope.camera.rotation.x + "/" + scope.camera.rotation.y + "/" + scope.camera.rotation.z);
 	    }
@@ -666,7 +669,8 @@ IndoorNavigation.BuildingModule.Floor = function ( data )
     this.updateFloor = function () {    
         //var time = Date.now() / 1000;
         if (!this.needsUpdate) { INTERSECTED_Wall = null; return; } //TODO Проблема в этом решение что все остальные этажи, которые обновляются тоже получат null объект
-        // и можно будет подсветить предмет сквозь стену нижних этажей
+        // и можно будет подсветить предмет сквозь стену нижних этажей 
+        // нужно для каждого этажа свою INTERSECTED WALL
 	    var vector = new THREE.Vector3(IndoorNavigation.Core.mouse.x, IndoorNavigation.Core.mouse.y, 1);
 	    IndoorNavigation.Core.projector.unprojectVector(vector, IndoorNavigation.Core.camera);
 	    var ray = new THREE.Raycaster(IndoorNavigation.Core.camera.position,
