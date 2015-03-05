@@ -643,7 +643,7 @@ this.WIRES = {
             },
             {
                 IDs: [4, 7],
-                AdditionalPoints: []
+                AdditionalPoints: [[13, 0, 1]]
             },
             {
                 IDs: [7, 2],

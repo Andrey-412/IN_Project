@@ -44,7 +44,7 @@ IndoorNavigation.Core = function( container , initHelpers )
 
         scope.container = document.getElementById(container);
         scope.container.appendChild(scope.renderer.domElement);
-        scope.renderer.domElement.removeAttribute("style");
+        //scope.renderer.domElement.removeAttribute("style");
 
         scope.clock = new THREE.Clock();
     }
@@ -163,7 +163,8 @@ IndoorNavigation.Core = function( container , initHelpers )
 	}
 
 	function moveCameraSlowly()
-	{    
+	{
+        //TODO: нужно разобраться с вращением... оно какое-то все равно не правильное, надо чтобы камера повернулась на объект сразу же и к нему приблежалась
 	    if (scope.i < scope.PathPoints.length - 5) {
 	        scope.i++;
 	        var direction = new THREE.Vector3().sub(scope.Marker.position, scope.camera.position).normalize();
@@ -174,7 +175,8 @@ IndoorNavigation.Core = function( container , initHelpers )
 
 	        //scope.camera.up = new THREE.Vector3(0, 1, 0);
 	        //scope.camera.lookAt(scope.camera.worldToLocal(scope.Marker.matrixWorld.getPosition()));
-	        scope.camera.lookAt(scope.MarkerWorldPosition);
+
+	        //scope.camera.lookAt(scope.MarkerWorldPosition);
 	        var direction = new THREE.Vector3().sub(scope.MarkerWorldPosition, scope.initialCenter.clone());
 	        scope.cameraControl.center.add(direction.multiplyScalar(1 / (scope.PathPoints.length - 3))); // методом проб и ошибок нашли цифру))
 	        scope.cameraControl.update();
@@ -193,7 +195,7 @@ IndoorNavigation.Core = function( container , initHelpers )
 	{
 	    pos2.y += 100;
 	    var curve = new THREE.SplineCurve3([pos1, pos2]);
-	    scope.PathPoints = curve.getPoints(50);
+	    scope.PathPoints = curve.getPoints(50); // больше точек => медленее движение
 	    scope.i = -1;
 	    scope.initialCenter = scope.cameraControl.center.clone();
 	    //var wire = new IndoorNavigation.Wire([pos1, pos2]);
@@ -366,6 +368,7 @@ IndoorNavigation.Logger = function ()
     {
         $("#InfoText").text("");
     }
+
 }
 
 
@@ -668,7 +671,9 @@ IndoorNavigation.BuildingModule.Floor = function ( data )
 	
     this.updateFloor = function () {    
         //var time = Date.now() / 1000;
-        if (!this.needsUpdate) { INTERSECTED_Wall = null; return; } //TODO Проблема в этом решение что все остальные этажи, которые обновляются тоже получат null объект
+        if (!this.needsUpdate) { INTERSECTED_Wall = null; return; }
+        // TODO Проблема в этом решение что все остальные этажи(которые шли до этого этажа),
+        // которые обновляются тоже получат null объект
         // и можно будет подсветить предмет сквозь стену нижних этажей 
         // нужно для каждого этажа свою INTERSECTED WALL
 	    var vector = new THREE.Vector3(IndoorNavigation.Core.mouse.x, IndoorNavigation.Core.mouse.y, 1);
@@ -3230,6 +3235,7 @@ IndoorNavigation.WiresModule = function()
             var FirstObject = markers.filter(function (o) { return o.ID == IDS[0]; })[0];
             var SecondObject = markers.filter(function (o) { return o.ID == IDS[1]; })[0];
          
+            // all wires are set position.y => one the ground
             if (AdditionalPoints.length > 0)
                 //Push additional points between objects
                 for (var j = 0; j < AdditionalPoints.length; j++) {
@@ -3248,8 +3254,6 @@ IndoorNavigation.WiresModule = function()
 
                 }
             else Path.push(FirstObject.Position, SecondObject.Position);
-
-            
 
             this.addWire(new IndoorNavigation.Wire(Path));
         }       
