@@ -1,0 +1,150 @@
+﻿@{
+    ViewBag.Title = "VirtualBuilding";
+    Layout = null;
+}
+
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>VirtualBuilding</title>
+    <style>
+        body{
+            margin: 0;
+	        padding: 0;
+	        border: 0;
+	        font-size: 100%;
+	        font: inherit;
+	        vertical-align: baseline;
+        }
+        #WebGLContainer{
+            width: 100%; height: 100%;
+            z-index: 0; position: absolute; left:0px; top:0px
+        }
+        #NetworkItemInfo{
+            margin: 3px;
+            width: auto;
+            height: 400px;
+            width: 30%;
+            display: none;
+            float: left;
+            z-index: 1;
+            position: absolute;
+        }
+        canvas 
+        {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        #RouteBox {
+            position: absolute;
+            display: none;
+            left: 0; right: 0;
+            width: 30%;
+            height: 70%;
+            z-index: 2;
+            margin: 0 auto;          
+        }
+        .CommonBoxStyle {
+            border: 1px solid #515edb;
+            border-radius: 5px;
+            background: #bfd7c3;
+        }
+        .CommonBoxTitleStyle {
+            background: #b4b4ea;
+            border: 1px solid #515edb;
+            border-radius: 15px;
+            display: block;
+            text-align: center;
+            font-family: georgia;
+            font-size: 12px;
+            padding: 10px;
+            margin: 10px;
+            width: auto;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h2>ConstructorTree</h2>
+    
+    <!-- jQuery code to display an information button and box when clicked. -->
+    <script src="@Url.Content("~/WebGL_Constructor/ThreeJs/js/jquery-1.9.1.js")" type="text/javascript"></script>
+    <script src="@Url.Content("~/WebGL_Constructor/ThreeJs/js/jquery-ui.js")" type="text/javascript"></script>
+    <link rel=stylesheet href="@Url.Content("~/WebGL_Constructor/ThreeJs/css/jquery-ui.css")" />
+    <link rel=stylesheet href="@Url.Content("~/WebGL_Constructor/ThreeJs/css/info.css")" />
+    
+    <!-- Script for infoButton + infoBox -->
+    <script src="@Url.Content("~/WebGL_Constructor/UI/InfoButton.js")"></script>
+    
+    <div id="infoButton"></div>
+    <div id="infoBox" title="Demo Information">
+        <p id="InfoText">Test</p>
+    </div>
+
+    <script src="@Url.Content("~/WebGL_Constructor/UI/GoBackButton.js")"></script>
+    <div id="menuButton"></div>
+
+    <script src="@Url.Content("~/WebGL_Constructor/UI/PathButton.js")"></script>
+    <div id="routeButton"></div>
+    <div id="routeBox" class="CommonBoxStyle">
+        <div class="CommonBoxTitleStyle">Пожалуйста, заполните поля и приступайте к поиску.</div>
+        <div>
+            @Html.DropDownList("myListStart")
+            @Html.DropDownList("myListEnd")
+            <script type="text/javascript">
+                function GetRoute() {
+                    $.ajax({
+                        url: '/Home/GetRoute?start=' + $('#myListStart').val() + '&finish=' + $('#myListEnd').val(),
+                        success: function (data) {   
+                            Core.API.CreatePathTest(data, true);
+                        },
+                        statusCode: {
+                            404: function (content) { alert('cannot find resource'); },
+                            500: function (content) { alert('internal server error'); }
+                        },
+                        error: function (req, status, errorObj) {
+                            // handle status === "timeout"
+                            // handle other errors
+                        }
+                    });
+                }
+            </script>
+            <button id="getRoute_Btn" class="btn btn-primary btn-lg" onclick="GetRoute()">Проложить путь!</button>
+        </div>
+    </div>
+
+
+    <div id="NetworkItemInfo" class="CommonBoxStyle">
+        <div class="CommonBoxTitleStyle">Test</div>
+        <p></p>
+    </div>
+
+    <div id="WebGLContainer">
+        <!-- Основная библиотека WebGL -->
+        <script src="@Url.Content("~/WebGL_Constructor/ThreeJs/three.min.js")" type="text/javascript"></script>
+        <!-- FullScreenMode -->
+        <script src="@Url.Content("~/WebGL_Constructor/ThreeJs/js/THREEx.FullScreen.js")" type="text/javascript"></script>
+        <script src="@Url.Content("~/WebGL_Constructor/ThreeJs/js/THREEx.KeyBoardState.js")" type="text/javascript"></script>
+        <script src="@Url.Content("~/WebGL_Constructor/ThreeJs/js/THREEx.WindowResize.js")" type="text/javascript"></script>
+        <!-- Stats(FPS) -->
+        <script src="@Url.Content("~/WebGL_Constructor/ThreeJs/js/Stats.js")" type="text/javascript"></script>       
+        <!-- Интерфейс(GUI) -->
+        <script src="@Url.Content("~/WebGL_Constructor/ThreeJs/js/DAT.GUI.min.js")" type="text/javascript"></script>
+        <!-- OrbitControls (mouse control)-->
+        <script src="@Url.Content("~/WebGL_Constructor/ThreeJs/js/OrbitControls.js")" type="text/javascript"></script>
+        <!-- Object loader(from blender)-->
+        <script src="@Url.Content("~/WebGL_Constructor/ThreeJs/js/loaders/ColladaLoader.js")" type="text/javascript"></script>
+
+        <!-- Ресурсы ( текстуры и прочее )-->
+        <script src="@Url.Content("~/WebGL_Constructor/Resources.js")" type="text/javascript"></script>
+        
+        <!-- Классы объектов -->
+        <script src="@Url.Content("~/WebGL_Constructor/Objects.js")" type="text/javascript"></script>
+
+        <script src="@Url.Content("~/WebGL_Constructor/Core.js")" type="text/javascript"></script>
+        <script src="@Url.Content("~/WebGL_Constructor/Visualization.js")" type="text/javascript"></script>
+        
+    </div>
+
+    <!-- Скрытый элемент для перехода назад пи помощи кнопки -->
+    @Html.Hidden("RedirectTo", Url.Action("Index", "My"));
+</body>

@@ -1,0 +1,21 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = null;
+    @Styles.Render("~/Content/bootstrap.css");
+}
+
+<style>
+    h1 {text-align:center}
+    p {text-align:center}
+    #main-container 
+    {
+        height: 100%;
+        padding-top: 10%;
+        margin-bottom: 0px;
+    }
+</style>
+<div id="main-container" class="jumbotron" style=""> 
+    <h1>Indoor Navigation</h1>
+    <p class="lead">Навигация внутри помещений.</p>
+    <p>@Html.ActionLink("Перейти к 3D зданию!", "Building", "My", new { @class = "btn btn-primary btn-lg" })</p>
+</div>
