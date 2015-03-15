@@ -1,4 +1,5 @@
-﻿var IndoorNavigation = { Version: "0.0.1" , Started: "25.09.2014", By: "NAFAW", mainScene: "undefined", Core: "undefined" };
+﻿var IndoorNavigation = { Version: "0.0.1", Started: "25.09.2014", By: "NAFAW", mainScene: "undefined", Core: "undefined" };
+var clock = new THREE.Clock();
 var INTERSECTED_Furniture; //FurnitureModule
 var INTERSECTED_Network; //NetworkModule
 var INTERSECTED_Wall; //BuildingModule
@@ -367,8 +368,48 @@ IndoorNavigation.Core.prototype = {
             }
         }
         this.interfaces.push(_interface);
-	}
+	},
 
+    createAnimation: function TextureAnimator(texture, tilesHoriz, tilesVert, numTiles, tileDispDuration) {	
+
+        var obj = {};
+        // note: texture passed by reference, will be updated by the update function.
+        obj.tilesHorizontal = tilesHoriz;
+        obj.tilesVertical = tilesVert;
+            // how many images does this spritesheet contain?
+            //  usually equals tilesHoriz * tilesVert, but not necessarily,
+            //  if there at blank tiles at the bottom of the spritesheet. 
+        obj.numberOfTiles = numTiles;
+        texture.wrapS = texture.wrapT = THREE.RepeatWrapping; 
+        texture.repeat.set(1 / obj.tilesHorizontal, 1 / obj.tilesVertical);
+
+            // how long should each image be displayed?
+        obj.tileDisplayDuration = tileDispDuration;
+
+            // how long has the current image been displayed?
+        obj.currentDisplayTime = 0;
+
+            // which image is currently being displayed?
+        obj.currentTile = 0;
+		
+        obj.update = function (milliSec)
+        {
+            obj.currentDisplayTime += milliSec;
+            while (obj.currentDisplayTime > obj.tileDisplayDuration)
+            {
+                obj.currentDisplayTime -= obj.tileDisplayDuration;
+                obj.currentTile++;
+                if (obj.currentTile == obj.numberOfTiles)
+                    obj.currentTile = 0;
+                var currentColumn = obj.currentTile % obj.tilesHorizontal;
+                texture.offset.x = currentColumn / obj.tilesHorizontal;
+                var currentRow = Math.floor(obj.currentTile / obj.tilesHorizontal);
+                texture.offset.y = currentRow / obj.tilesVertical;
+            }
+        };
+
+        return obj;
+    }		
 }
 
 IndoorNavigation.Logger = function ()
@@ -2825,7 +2866,7 @@ IndoorNavigation.NetworkModule.Door = function ( data, object )
                 scope.mesh = collada.scene.children[0].children[0];
                 scope.mesh.scale.set(25, 25, 25);
                 collada.scene.position.set(scope.position.x, scope.position.y, scope.position.z);
-                //collada.scene.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI / 2);
+                //collada.mesh.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);
                 var markerTexture = THREE.ImageUtils.loadTexture('/WebGL_Constructor/Objects/MARKER1.png');
                 var markerMaterial = new THREE.MeshLambertMaterial({ map: markerTexture, side: THREE.DoubleSide });
                 scope.mesh.material = markerMaterial;
@@ -3016,11 +3057,53 @@ IndoorNavigation.NetworkModule.Server = function ( data, object )
 		var multiply = data.Unit;
 		var position = object.position;
 		var rotation = 0;
-		var positionVector = new THREE.Vector3( position[0] + data.TranslateX, position[1] + data.TranslateY, position[2] + data.TranslateZ ).multiplyScalar(multiply);
-		
-		CreateServer( positionVector , rotation );
+		scope.position = new THREE.Vector3( position[0] + data.TranslateX, position[1] + data.TranslateY, position[2] + data.TranslateZ ).multiplyScalar(multiply);
+
+		LoadModel();
+
+		//CreateServer( positionVector , rotation );
 	}
 	
+	function LoadModel() {
+
+	    var loader = new THREE.ColladaLoader();
+	    loader.load(
+            '/WebGL_Constructor/Objects/ServerCopy.xml',
+            function (collada) {
+                scope.object = collada;
+                scope.mesh = collada.scene.children[0].children[0];
+                scope.mesh.scale.set(25, 25, 25);
+                collada.scene.position.set(scope.position.x, scope.position.y, scope.position.z);
+                //scope.mesh.rotateOnAxis(new THREE.Vector3(0, 0, 1), Math.PI / 2);
+                scope.mesh.rotateOnAxis(new THREE.Vector3(1, 0, 0), - Math.PI/2);
+
+                /*var rotWorldMatrix = new THREE.Matrix4();
+                rotWorldMatrix.makeRotationAxis(new THREE.Vector3(0, 1, 0), Math.PI / 2);
+                rotWorldMatrix.multiply(scope.mesh.matrix);
+                scope.mesh.matrix = rotWorldMatrix;
+                scope.mesh.rotation.setFromRotationMatrix(scope.mesh.matrix);*/
+
+                /*var markerTexture = THREE.ImageUtils.loadTexture('/WebGL_Constructor/Objects/ServerCopyTexture.png');
+                var markerMaterial = new THREE.MeshLambertMaterial({ map: markerTexture, side: THREE.DoubleSide });
+                scope.mesh.material = markerMaterial;
+                IndoorNavigation.mainScene.add(collada.scene);*/
+
+
+                var serverTexture = new THREE.ImageUtils.loadTexture('/WebGL_Constructor/Objects/ServerTexture.png');
+                // texture, #horiz, #vert, #total, duration.
+                scope.animation = IndoorNavigation.Core.createAnimation(serverTexture, 2, 1, 2, 200);
+                var serverMaterial = new THREE.MeshBasicMaterial({ map: serverTexture, side: THREE.DoubleSide });
+                //var markerMaterial = new THREE.MeshLambertMaterial({ map: markerTexture, side: THREE.DoubleSide });
+                scope.mesh.material = serverMaterial;
+                IndoorNavigation.mainScene.add(collada.scene);
+            },
+            // Function called when download progresses
+            function (xhr) {
+                console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+            }
+        );
+	}
+
 	function CreateServer( position, rotation )
 	{		
 		var serverGeometry = new THREE.BoxGeometry( 50,200,50 );
@@ -3046,7 +3129,11 @@ IndoorNavigation.NetworkModule.Server = function ( data, object )
 
 	}
 
-	this.updateItem = function () { }
+	this.updateItem = function () {
+
+	    var delta = clock.getDelta();
+	    scope.animation.update(1000 * delta);
+	}
 }
 
 IndoorNavigation.NetworkModule.Commutator = function ( data, object )
@@ -3761,6 +3848,51 @@ IndoorNavigation.WiresModule = function (markersPositions) {
 }
 */
 
+
+/*
+    // Rotate an object around an arbitrary axis in object space
+    var rotObjectMatrix;
+    function rotateAroundObjectAxis(object, axis, radians) {
+        rotObjectMatrix = new THREE.Matrix4();
+        rotObjectMatrix.makeRotationAxis(axis.normalize(), radians);
+
+        // old code for Three.JS pre r54:
+        // object.matrix.multiplySelf(rotObjectMatrix);      // post-multiply
+        // new code for Three.JS r55+:
+        object.matrix.multiply(rotObjectMatrix);
+
+        // old code for Three.js pre r49:
+        // object.rotation.getRotationFromMatrix(object.matrix, object.scale);
+        // old code for Three.js r50-r58:
+        // object.rotation.setEulerFromRotationMatrix(object.matrix);
+        // new code for Three.js r59+:
+        object.rotation.setFromRotationMatrix(object.matrix);
+    }
+
+    var rotWorldMatrix;
+    // Rotate an object around an arbitrary axis in world space       
+    function rotateAroundWorldAxis(object, axis, radians) {
+        rotWorldMatrix = new THREE.Matrix4();
+        rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
+
+        // old code for Three.JS pre r54:
+        //  rotWorldMatrix.multiply(object.matrix);
+        // new code for Three.JS r55+:
+        rotWorldMatrix.multiply(object.matrix);                // pre-multiply
+
+        object.matrix = rotWorldMatrix;
+
+        // old code for Three.js pre r49:
+        // object.rotation.getRotationFromMatrix(object.matrix, object.scale);
+        // old code for Three.js pre r59:
+        // object.rotation.setEulerFromRotationMatrix(object.matrix);
+        // code for r59+:
+        object.rotation.setFromRotationMatrix(object.matrix);
+    }
+
+    var xAxis = new THREE.Vector3(1,0,0);
+    rotateAroundWorldAxis(mesh, xAxis, Math.PI / 180);
+*/
 
 
 
