@@ -12,6 +12,8 @@
 	        padding: 0;
 	        border: 0;
 	        font-size: 100%;
+            font-family: Copperplate Gothic Light;
+            font-weight: bold;
 	        font: inherit;
 	        vertical-align: baseline;
         }
@@ -23,10 +25,18 @@
             margin: 3px;
             width: auto;
             height: 400px;
-            width: 30%;
+            width: 30% !important;
             display: none;
-            float: left;
+            left: 0;
             z-index: 1;
+            position: absolute;
+        }
+        #TestContextMenu{
+            margin: 3px;
+            width: auto;
+            height: auto;
+            left: 0;
+            z-index: 2;
             position: absolute;
         }
         canvas 
@@ -54,8 +64,6 @@
             border-radius: 15px;
             display: block;
             text-align: center;
-            font-family: georgia;
-            font-size: 12px;
             padding: 10px;
             margin: 10px;
             width: auto;
@@ -116,6 +124,15 @@
     <div id="NetworkItemInfo" class="CommonBoxStyle">
         <div class="CommonBoxTitleStyle">Test</div>
         <p></p>
+    </div>
+
+    <div id="TestContextMenu" class="CommonBoxStyle">
+        <div class="CommonBoxTitleStyle">Test1</div>
+        <div class="CommonBoxTitleStyle">Test2</div>
+        <div class="CommonBoxTitleStyle">Test3</div>
+        <div class="CommonBoxTitleStyle">Test4</div>
+        <div class="CommonBoxTitleStyle">Test5</div>
+        <div class="CommonBoxTitleStyle">Test6</div>
     </div>
 
     <div id="WebGLContainer">

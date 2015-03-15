@@ -157,7 +157,8 @@ IndoorNavigation.Core = function( container , initHelpers )
 			case 2: 
 				//Middle Mouse button pressed.
 				break;
-			case 3: 
+		    case 3:
+		        if (INTERSECTED_Network) IndoorNavigation.Core.Logger.LogSet(INTERSECTED_Network.name + "/" + INTERSECTED_Network.id);
 				//Right Mouse button pressed.
 				break;
 			default:
@@ -316,6 +317,7 @@ IndoorNavigation.Core = function( container , initHelpers )
 	    return false;
 	}
 
+    //указывает есть ли текущий объект типа [class] уже в массиве
 	Array.prototype.findPrototype = function (obj) {
 	    var i = this.length;
 	    while (i--) {
@@ -2988,7 +2990,8 @@ IndoorNavigation.NetworkModule.Computer = function ( data, object )
 	        {
 	            INTERSECTED_Network = intersects[0].object;            
 	        }
-	        IndoorNavigation.Core.Logger.LogSet(INTERSECTED_Network.name + "/" + INTERSECTED_Network.id);
+            //Будем делать контекстное меню, перенес при нажатии правой кнопкой по объекту
+	        //IndoorNavigation.Core.Logger.LogSet(INTERSECTED_Network.name + "/" + INTERSECTED_Network.id); 
 	    } 
 	    else		
 	        if (INTERSECTED_Network != null)
@@ -3406,7 +3409,7 @@ IndoorNavigation.API = function()
             $('#NetworkItemInfo').fadeIn('fast');
         else
             if ($('#NetworkItemInfo').css('display') != 'none')
-                $('#NetworkItemInfo').fadeOut();
+                $('#NetworkItemInfo').fadeOut(100);
     }
 
 }

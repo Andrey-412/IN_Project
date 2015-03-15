@@ -100,8 +100,8 @@ namespace IndoorNavigation.Interface.Controllers
         {
             return View();
         }
-
-        /*Для открытия страницы второго этапа поиска в ответ на отправку формы*/
+        
+        /* Для открытия страницы второго этапа поиска в ответ на отправку формы */
         [HttpPost]
         public ViewResult Search2(Marker finishMar, int port) 
         {
@@ -110,8 +110,11 @@ namespace IndoorNavigation.Interface.Controllers
         }
 
         /*для выдачи результата второго этапа поиска*/
-        public JsonResult Search2Json(Marker finishMar, int port)
+        //public JsonResult Search2Json(Marker finishMar, int port)
+        public JsonResult Search2Json(int MarkerID, int port)
         {
+            Marker finishMar = repo.Markers.Where(x => x.Id == MarkerID).First();
+
             Marker linkedMar = finishMar.Device.Neighbours[port].Markers.First();
             var data1 =  new
             {
