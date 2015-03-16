@@ -5,7 +5,7 @@ var INTERSECTED_Network; //NetworkModule
 var INTERSECTED_Wall; //BuildingModule
 var INTERSECTED_Marker; // marker для путей.
 
-var ignoreHTMLobjects = ["myListStart", "myListEnd", "getRoute_Btn"];
+var ignoreHTMLobjects = ["myListStart", "myListEnd", "getRoute_Btn", "routeBox"];
 
 IndoorNavigation.Core = function( container , initHelpers )
 {
@@ -141,7 +141,8 @@ IndoorNavigation.Core = function( container , initHelpers )
 	function onDocumentMouseDown(event)
 	{
 	    if (ignoreHTMLobjects.indexOf(event.target.id) == -1)
-		event.preventDefault();
+	        event.preventDefault();
+	    else return;
 		
 		switch (event.which) {
 		    case 1:
@@ -3068,7 +3069,7 @@ IndoorNavigation.NetworkModule.Server = function ( data, object )
 
 	    var loader = new THREE.ColladaLoader();
 	    loader.load(
-            '/WebGL_Constructor/Objects/ServerCopy.xml',
+            '/WebGL_Constructor/Objects/Server.xml',
             function (collada) {
                 scope.object = collada;
                 scope.mesh = collada.scene.children[0].children[0];
@@ -3088,10 +3089,9 @@ IndoorNavigation.NetworkModule.Server = function ( data, object )
                 scope.mesh.material = markerMaterial;
                 IndoorNavigation.mainScene.add(collada.scene);*/
 
-
-                var serverTexture = new THREE.ImageUtils.loadTexture('/WebGL_Constructor/Objects/ServerTexture.png');
-                // texture, #horiz, #vert, #total, duration.
-                scope.animation = IndoorNavigation.Core.createAnimation(serverTexture, 2, 1, 2, 200);
+                var serverTexture = new THREE.ImageUtils.loadTexture('/WebGL_Constructor/Objects/ServerTexture2.png');
+                // texture, #columns, #rows, #total, duration.
+                scope.animation = IndoorNavigation.Core.createAnimation(serverTexture, 6, 2, 12, 100);
                 var serverMaterial = new THREE.MeshBasicMaterial({ map: serverTexture, side: THREE.DoubleSide });
                 //var markerMaterial = new THREE.MeshLambertMaterial({ map: markerTexture, side: THREE.DoubleSide });
                 scope.mesh.material = serverMaterial;
