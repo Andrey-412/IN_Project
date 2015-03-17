@@ -1,0 +1,13 @@
+namespace IndoorNavigation.Domain.ModelClasses
+{
+    public partial class LinksM
+    {
+        public int Id { get; set; }
+        public int Marker1 { get; set; }
+        public int Marker2 { get; set; }
+        public int Length { get; set; }
+        public byte[] ImageData { get; set; }
+        public virtual Marker Marker { get; set; }
+        public virtual Marker Marker3 { get; set; }
+    }
+}
