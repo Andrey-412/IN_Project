@@ -1,0 +1,133 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data.SqlClient;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Data;
+using System.Linq;
+using System.Drawing;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.IO;
+using System.Net.Mime;
+
+namespace FillingDB
+{
+    public partial class Form1 : Form
+    {
+        string path;
+        FileDialog fd;
+
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void folderBrowserDialog1_HelpRequest(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+        }
+
+        private void btnLoad_Click(object sender, EventArgs e)
+        {
+            Image im = Image.FromFile(path);
+            byte[] imb; //= new byte[]{};
+            //path = tbName.Text;
+            FileStream f = new FileStream(".\\testtttt", FileMode.Create);
+            BinaryFormatter b = new BinaryFormatter();
+            b.Serialize(f, im); 
+            //f.Read(imb, 0,(int)f.Length);
+            f.Position = 0;
+            imb = new byte[f.Length];
+            for (int i = 0; i < f.Length; i++)
+            {
+                imb[i] = (byte)f.ReadByte();
+            }
+            SqlConnection s1 = new SqlConnection(@"Data Source=(localdb)\v11.0;Initial Catalog=IndoorNavigation;Integrated Security=True");
+            if (s1.State == ConnectionState.Open)
+                s1.Close();
+            s1.Open();
+            SqlCommand com = new SqlCommand("UPDATE [Markers] SET [ImageData] = @Data WHERE [Id] = @number ");
+            com.Connection = s1;
+            com.Parameters.Add(new SqlParameter("number", int.Parse(cbId.Text)));
+            com.Parameters.Add(new SqlParameter("Data",imb));
+            com.ExecuteNonQuery();
+            s1.Close();
+            //IndoornavigationDataSet s = new IndoornavigationDataSet();
+            //IndoornavigationDataSet.MarkersRow m = s.Markers.Where(p => p.Id == int.Parse(tbId.Text)).First();
+            f.Close();
+        }
+
+        private void btnName_Click(object sender, EventArgs e)
+        {
+            fd = new OpenFileDialog();
+            DialogResult result = fd.ShowDialog();
+            if (result == System.Windows.Forms.DialogResult.OK)
+            {
+                tbName.Text = fd.FileName;
+                path = tbName.Text;
+            }
+            btnLoad.Enabled = true;
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            // TODO: данная строка кода позволяет загрузить данные в таблицу "indoornavigationDataSet.LinksM". При необходимости она может быть перемещена или удалена.
+            this.linksMTableAdapter.Fill(this.indoornavigationDataSet.LinksM);
+            // TODO: данная строка кода позволяет загрузить данные в таблицу "indoornavigationDataSet.Markers". При необходимости она может быть перемещена или удалена.
+            this.markersTableAdapter.Fill(this.indoornavigationDataSet.Markers);
+
+        }
+
+        private void btnName2_Click(object sender, EventArgs e)
+        {
+            fd = new OpenFileDialog();
+            DialogResult result = fd.ShowDialog();
+            if (result == System.Windows.Forms.DialogResult.OK)
+            {
+                tbName2.Text = fd.FileName;
+                path = tbName2.Text;
+            }
+            btnLoad2.Enabled = true;
+        }
+
+        private void btnLoad2_Click(object sender, EventArgs e)
+        {
+            Image im = Image.FromFile(path);
+            byte[] imb; 
+            FileStream f = new FileStream(".\\testtttt.txt", FileMode.Create);
+            BinaryFormatter b = new BinaryFormatter();
+            b.Serialize(f, im);
+            f.Position = 0;
+            imb = new byte[f.Length];
+            for (int i = 0; i < f.Length; i++)
+            {
+                imb[i] = (byte)f.ReadByte();
+            }
+            SqlConnection s1 = new SqlConnection(@"Data Source=(localdb)\v11.0;Initial Catalog=IndoorNavigation;Integrated Security=True");
+            if (s1.State == ConnectionState.Open)
+                s1.Close();
+            s1.Open();
+            SqlCommand com = new SqlCommand("UPDATE [LinksM] SET [ImageData] = @Data WHERE ([Marker1] = @number1) AND ([Marker2] = @number2)");
+            SqlCommand com2 = new SqlCommand("SELECT [Id] FROM [LinksM] WHERE ([LinksM].[Marker1] = @number1) AND ([LinksM].[Marker2] = @number2)");
+            com.Connection = s1;
+            com2.Connection = s1;
+            com2.Parameters.Add(new SqlParameter("number1", int.Parse(cbIdFrom.Text)));
+            com2.Parameters.Add(new SqlParameter("number2", int.Parse(cbIdTo.Text)));
+            com.Parameters.Add(new SqlParameter("number1", int.Parse(cbIdFrom.Text)));
+            com.Parameters.Add(new SqlParameter("number2", int.Parse(cbIdTo.Text)));
+            com.Parameters.Add(new SqlParameter("Data", imb));
+            int count = com2.ExecuteNonQuery(); 
+            if (count == 0)
+                MessageBox.Show("Пути напрямую между этими маркерами нет. Введите другие маркеры");
+            else
+                com.ExecuteNonQuery();
+            s1.Close();
+            f.Close();
+        }
+    }
+}
