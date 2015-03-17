@@ -2908,7 +2908,6 @@ IndoorNavigation.NetworkModule.Door = function ( data, object )
 	            if (intersect_another.length == 0) INTERSECTED_Marker = null;
 	        }
 	    }
-
 	}
 
 	function createGlow()
@@ -3077,6 +3076,7 @@ IndoorNavigation.NetworkModule.Server = function ( data, object )
                 collada.scene.position.set(scope.position.x, scope.position.y, scope.position.z);
                 //scope.mesh.rotateOnAxis(new THREE.Vector3(0, 0, 1), Math.PI / 2);
                 scope.mesh.rotateOnAxis(new THREE.Vector3(1, 0, 0), - Math.PI/2);
+                scope.mesh.geometry.computeTangents();
 
                 /*var rotWorldMatrix = new THREE.Matrix4();
                 rotWorldMatrix.makeRotationAxis(new THREE.Vector3(0, 1, 0), Math.PI / 2);
@@ -3129,11 +3129,91 @@ IndoorNavigation.NetworkModule.Server = function ( data, object )
 
 	}
 
-	this.updateItem = function () {
+	this.updateItem = function (ray) {
 
 	    var delta = clock.getDelta();
 	    scope.animation.update(1000 * delta);
+
+	    var intersects = ray.intersectObject(scope.mesh);
+
+	    if (intersects.length > 0) {
+	        if (intersects[0].object != INTERSECTED_Network) {
+	            INTERSECTED_Network = intersects[0].object;
+	        }	        
+	        createGlow();
+	        scope.Glow.material.uniforms.viewVector.value = new THREE.Vector3().subVectors(IndoorNavigation.Core.camera.position, scope.Glow.position);
+	    }
+	    else {
+
+	        deleteGlow();
+
+	        if (INTERSECTED_Network != null) {
+	            var intersect_another = ray.intersectObject(INTERSECTED_Network);
+	            if (intersect_another.length == 0) INTERSECTED_Network = null;
+	        }
+	    }
 	}
+
+	function createGlow() {
+	    if (scope.Glow != null) return;
+	    
+	    var outlineMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.BackSide });
+
+	    var customMaterial = new THREE.ShaderMaterial(
+        {
+            uniforms:
+            {
+                "c": { type: "f", value: 1.0 },
+                "p": { type: "f", value: 2.0 },
+                glowColor: { type: "c", value: new THREE.Color(0x878787) },
+                viewVector: { type: "v3", value: IndoorNavigation.Core.camera.position }
+            },
+            vertexShader: ["uniform vec3 viewVector;",
+                            "uniform float c;",
+                            "uniform float p;",
+                            "varying float intensity;",
+                            "void main()",
+                            "{",
+                                "vec3 vNormal = normalize( normalMatrix * normal );",
+                                "vec3 vNormel = normalize( normalMatrix * viewVector );",
+                                "intensity = 0.6; //pow( c - dot(vNormal, vNormel), p );",
+                                "gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+                            "}"].join("\n"),
+            fragmentShader: ["uniform vec3 glowColor;",
+                              "varying float intensity;",
+                              "void main()",
+                              "{",
+                                  "vec3 glow = glowColor * intensity;",
+                                  "gl_FragColor = vec4( glow, 1.0 );",
+                              "}"].join("\n"),
+            side: THREE.FrontSide,
+            blending: THREE.AdditiveBlending,
+            transparent: true
+        });
+	    // prevent WebGL GL ERROR :GL_INVALID_OPERATION : glDrawElements: attempt to access out of range vertices in attribute 1
+        // clone geometry() !!!
+	    //scope.Glow = new THREE.Mesh(scope.mesh.geometry.clone(), customMaterial);
+
+	    var box = new THREE.Box3().setFromObject(scope.mesh);
+	    console.log(box.min, box.max, box.size());
+	    var size = new THREE.Vector3().sub(box.max, box.min);
+	    var geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
+
+	    scope.Glow = new THREE.Mesh(geometry, customMaterial);
+	    scope.Glow.position.set(scope.position.x, scope.position.y + size.y/2, scope.position.z);
+	    //scope.Glow.rotateOnAxis(new THREE.Vector3(1, 0, 0), -Math.PI / 180 * 90);
+	    //scope.Glow.rotateOnAxis(new THREE.Vector3(0, 0, 1), Math.PI / 2);
+	    //scope.Glow.applyMatrix(scope.mesh.matrix);
+	    //scope.Glow.scale.set(25, 25, 25);
+	    scope.Glow.scale.multiplyScalar(1.05);
+	    IndoorNavigation.mainScene.add(scope.Glow);
+	}
+
+	function deleteGlow() {
+	    IndoorNavigation.mainScene.remove(scope.Glow);
+	    scope.Glow = null;
+	}
+
 }
 
 IndoorNavigation.NetworkModule.Commutator = function ( data, object )

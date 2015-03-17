@@ -114,8 +114,14 @@ namespace IndoorNavigation.Interface.Controllers
         public JsonResult Search2Json(int MarkerID, int port)
         {
             Marker finishMar = repo.Markers.Where(x => x.Id == MarkerID).First();
+            
+            finishMar.Device.FillPorts();
+            
+            // Спросить андрея по этому поводу
+            //Marker linkedMar = finishMar.Device.Neighbours[port].Markers.First();
 
-            Marker linkedMar = finishMar.Device.Neighbours[port].Markers.First();
+            Marker linkedMar = finishMar.Device.Ports.Where(x => x.Id == port).First().Device2.Markers.First();
+
             var data1 =  new
             {
                 Id = linkedMar.Id, X = linkedMar.X, Y = linkedMar.Y, Z = linkedMar.Z,
@@ -138,7 +144,12 @@ namespace IndoorNavigation.Interface.Controllers
                     Id = t.Key.Id
                 })
             };
-            var data = new { finishMar = data2, linkedMar = data1 }; 
+
+            // почему finishMar = это заданный маркер, а linkedMar = результат поиска
+            //var data = new { finishMar = data2, linkedMar = data1 };
+
+            var data = new { finishMar = data1, linkedMar = data2 };
+
             return Json(data, JsonRequestBehavior.AllowGet);
         }
         
@@ -214,5 +225,26 @@ namespace IndoorNavigation.Interface.Controllers
             var data = new { markers = data1, points = data2 };
             return Json(data, JsonRequestBehavior.AllowGet);
         }
+    
+        public JsonResult GetAllDevicePorts(int MarkerID)
+        {
+            Marker marker = repo.Markers.Where(x => x.Id == MarkerID).First();
+            
+            if (marker.Device == null || marker.DeviceId == null) return null;
+
+            marker.Device.FillPorts();
+
+            Port [] ports = marker.Device.Ports.ToArray();
+
+            var data = ports.Select(x => new
+            {
+                portID = x.Id,  // ID самого порта
+                deviceID_portBelongsTo = x.Device, // ID устройства, которому принадлежит этот порт
+                deviceID_connectedByPort = x.DeviceOut // ID устройства, которое по ту сторону провода подключеннго к этому порту
+            });
+
+            return Json(data, JsonRequestBehavior.AllowGet);
+        }
+
     }
 }
