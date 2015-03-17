@@ -145,7 +145,8 @@ namespace IndoorNavigation.Interface.Controllers
                 })
             };
 
-            // почему finishMar = это заданный маркер, а linkedMar = результат поиска
+            // почему finishMar = это заданный маркер, а linkedMar = результат поиска 
+            //потому что finishMar - это маркер, полученный на финише 1 этапа поиска, потому назван finish
             //var data = new { finishMar = data2, linkedMar = data1 };
 
             var data = new { finishMar = data1, linkedMar = data2 };
