@@ -1,0 +1,29 @@
+namespace IndoorNavigation.Domain.ModelClasses.Mapping
+{
+    public class LinksMMap : EntityTypeConfiguration<LinksM>
+    {
+        public LinksMMap()
+        {
+            // Primary Key
+            this.HasKey(t => t.Id);
+
+            // Properties
+            // Table & Column Mappings
+            this.ToTable("LinksM");
+            this.Property(t => t.Id).HasColumnName("Id");
+            this.Property(t => t.Marker1).HasColumnName("Marker1");
+            this.Property(t => t.Marker2).HasColumnName("Marker2");
+            this.Property(t => t.Length).HasColumnName("Length");
+            this.Property(t => t.ImageData).HasColumnName("ImageData");
+
+            // Relationships
+            this.HasRequired(t => t.Marker)
+                .WithMany(t => t.LinksMs)
+                .HasForeignKey(d => d.Marker1);
+            this.HasRequired(t => t.Marker3)
+                .WithMany(t => t.LinksMs1)
+                .HasForeignKey(d => d.Marker2);
+
+        }
+    }
+}
