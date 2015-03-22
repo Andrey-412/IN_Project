@@ -1,0 +1,205 @@
+@using IndoorNavigation.Domain.ModelClasses
+@using IndoorNavigation.Interface.Models
+@model Search1Model
+
+@{
+    Layout = null;
+    int number_of_finish_marker = 5;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поиск</title>
+    <link href="~/Content/bootstrap.css" rel="stylesheet"/>
+    <link href="~/Content/bootstrap-responsive.css" rel="stylesheet"/>
+    <script src="~/Scripts/bootstrap.js"></script>
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="~/Scripts/jquery.unobtrusive-ajax.js"></script>
+    <!-- Le styles -->
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .container-narrow > hr
+        {
+            margin: 30px 0;
+        }
+      .sidebar-nav {
+        padding: 9px 0;
+      }      
+    </style>
+    <script type="text/javascript">
+        //функции открытия/закрытия окон
+        $(document).ready(function () {
+            $("#open_button").click(function () {
+                $("#search1form").slideToggle(200);
+                $("#search2form").css("display", "none");
+            });
+            $("#placeForRoom").click(function () {
+                $("#search1form").css("display", "none");
+                $("#search2form").css("display", "none");
+            });
+            $("#search2").click(function () {
+                if ($("#search2").attr("onclick") != "") {
+                    $("#search1form").css("display", "none");
+                    $("#search2form").slideToggle(200);
+                }
+            });
+            $("#search1go").click(function () {
+                $("#search2").attr({ onclick: "Search2()" });
+            });
+            $("#open_button_2").click(function () {
+                $("#search2form").slideToggle(200);
+                $("#search1form").css("display", "none");
+            });
+        });
+    </script>
+    <script>
+        function GenerateGetRoom() {
+            $("#generateGetRoom").click();
+        }
+
+        /* в эту функцию вставляй функции, которые визуализируют кратчайший путь. параметр data
+        выдаётся методом действия GetRoute, поэтому структуру параметра (его поля) смотри там*/
+        function ProcessDataPath(data) {
+            $("#Finish1").val(data[data.length - 1].Id);
+            //$("#
+            //ниже - тестовый код. вместо него вставляй свои функции
+            var target = $("#placeForRoom");
+            target.empty();
+            $("#placeForRoom").css("font-size", 18);
+            for (var i = 0; i < data.length; i++) {
+                var marker = data[i];
+                target.append("<tr><td>" + marker.Id + "</td><td>"
+                + marker.Description + "</td><td>" + marker.DeviceId + "</td></tr>");
+            }
+        }
+
+        /*в эту функцию вставляй функции, которые визуализируют помещение с маркерами. параметр data 
+        выдаётся методом действия GetRoomWithMarkers*/
+        function ProcessDataRoom(data) {
+            //это - тестовый код
+            if (data != null) {
+                var mar = data.markers;
+                $("#placeForRoom").append(mar[4].Description);
+            }
+        }
+
+        /**/
+        function ProcessDataPort(data) {
+            return window.alert(data.linkedMar.Description);
+        }
+    </script>
+</head>
+<body onload="GenerateGetRoom()">
+    <div class="navbar navbar-inverse navbar-fixed-top" >
+        <div class="navbar-inner">
+            <div class="container-fluid">
+                <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                @Html.ActionLink("Инженерная indoor-навигация", "Index", "Home", null, new { @class = "brand" })
+                <div class="nav-collapse collapse">
+                    <p class="navbar-text pull-right">
+                        Logged in as <a href="#" class="navbar-link">Андрей</a>
+                    </p>
+                    <ul class="nav">
+                        <li>@Html.ActionLink("Главная", "Index", null, new { @class = "active" })</li>
+                        <li>@Html.ActionLink("О программе", "About")</li>
+                        <li>@Html.ActionLink("Контакты", "Contact")</li>
+                    </ul>
+                </div>
+                <!--/.nav-collapse -->
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="row-fluid">
+            <div class="span3">
+                <div class="well sidebar-nav">
+                    <ul class="nav nav-list">
+                        <li>@Html.ActionLink("О программе \u00BB", "About", null, new { @class = "btn-link" })</li>
+                        <li>@Html.ActionLink("О маркерах \u00BB", "GetAllMarkers", null, new { @class = "btn-link" })</li>
+                        <li>@Html.ActionLink("О нас \u00BB", "Contact", null, new { @class = "btn-link" })</li>
+                        <li><a class="btn-link">Будущее проекта &raquo;</a></li>
+                        <li>@Html.ActionLink("Использование \u00BB", "Search1", null, new { @class = "btn-link" })</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="span9 thumbnail" style="background-image:url(../Images/MapOfLysva.png); height:550px;">
+                <div style="position:fixed;">
+                    <button id="open_button" style="background-color:white;"><img src="~/Images/MAP.png"/></button>
+                    <!--<button id="open_button_2" style="background-color:white; padding-bottom:4px; padding-top:2px;">
+                        <img src="~/Images/Link2.png"/>
+                    </button>-->
+                </div>
+                <div id = "search1form" class="form-actions" style="position:fixed; margin-top: 55px; display:none;">
+                    <p id="open" style="font-weight: bold">Данные для поиска</p>
+                    @using (Ajax.BeginForm("GetRoute", "Home", new AjaxOptions
+                    {
+                        OnSuccess = "ProcessDataPath",
+                        Url = Url.Action("GetRoute", new { start = Model.Start, finish = Model.Finish }),
+                        HttpMethod = "POST",
+                        UpdateTargetId = "placeForRoom"
+                    }))
+                    {            
+                        <div>
+                            @Html.Label("Start", "Введите начальный маркер пути:")
+                            @Html.DropDownListFor(m => m.Start, new SelectList(Model.Markers.Select(m => m.Id)))
+                        </div> 
+                        <div>
+                            @Html.Label("Finish", "Введите конечный маркер пути:")
+                            @Html.DropDownListFor(m => m.Finish, new SelectList(Model.Markers.Where(m=>m.Device != null).Select(m => m.Id)))
+                        </div> 
+                        <input id="search1go" type="submit" value="Начать поиск" class="btn btn-info"/>
+                        <a id="search2" class="btn" href="#" onclick=""><i class="icon-forward"></i></a>
+                    }
+                </div>
+                <div id="search2form" class="form-actions" style="position:fixed; margin-top: 55px; display:none;">
+                    <p style="font-weight: bold">Второй этап поиска</p>
+                     @using (Ajax.BeginForm("Search2Json", "Home", new AjaxOptions
+                     {
+                         OnSuccess = "ProcessDataPort",
+                         Url = Url.Action("Search2Json", new {  }),
+                         HttpMethod = "POST",
+                         UpdateTargetId = "placeForRoom"
+                     }))
+                     {
+                        <div>
+                            @Html.Label("Finish3", "Маркер:")
+                            @Html.TextBox("Finish1", 1, new {})
+                        </div> 
+                        <div>
+                            @Html.Label("Finish2", "Введите номер выбранного порта:")
+                            @{
+                                if (Model.Finish != 0)
+                                {
+                                    @Html.DropDownListFor(m=>m.Port, new SelectList(Model.Markers.Where(m=>m.Id == Model.Finish).First().Device.Neighbours.Keys))
+                                }
+                            }
+                        </div> 
+                        <input type="submit" value="Начать поиск" class="btn btn-info"/>
+                     }
+                </div>
+
+                <div id="placeForRoom"><!--Сюда вставляй canvas, где будет визуализация помещения--></div> 
+                
+                @Ajax.ActionLink("Вызвать данные о помещении с маркерами", "GetRoomWithMarkers", null,
+                 new AjaxOptions()
+                 {
+                     OnSuccess = "ProcessDataRoom",
+                     Url = Url.Action("GetRoomWithMarkers")
+                 },
+                 new { id = "generateGetRoom", style = "display:none" })
+            </div>
+        </div>
+    </div>    
+</body>    
+</html>
