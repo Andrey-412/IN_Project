@@ -4,7 +4,6 @@
 
 @{
     Layout = null;
-    int number_of_finish_marker = 5;
 }
 
 <!DOCTYPE html>
@@ -67,8 +66,15 @@
         /* в эту функцию вставляй функции, которые визуализируют кратчайший путь. параметр data
         выдаётся методом действия GetRoute, поэтому структуру параметра (его поля) смотри там*/
         function ProcessDataPath(data) {
-            $("#Finish1").val(data[data.length - 1].Id);
-            //$("#
+            $("#finish").val(data[data.length - 1].Id);
+            $("#finishDouble").val(data[data.length - 1].Id);
+            $("#portBlock").empty(); 
+            var select = "<select id=\"port\" data-val=\"true\" name=\"port\">";
+            for (var i = 0; i < data[data.length - 1].Keys.length; i++) {
+                select = select + "<option>" + data[data.length - 1].Keys[i] + "</option>";
+            }
+            select = select + "</select>";
+            $("#portBlock").append(select);
             //ниже - тестовый код. вместо него вставляй свои функции
             var target = $("#placeForRoom");
             target.empty();
@@ -90,8 +96,10 @@
             }
         }
 
-        /**/
+        /*в эту функцию вставляй функции, которые визуализируют связь между конечным маркером и устройством, связанным через порт. 
+        параметр data выдаётся методом действия Search2Json*/
         function ProcessDataPort(data) {
+            //это тестовый код
             return window.alert(data.linkedMar.Description);
         }
     </script>
@@ -167,22 +175,20 @@
                      @using (Ajax.BeginForm("Search2Json", "Home", new AjaxOptions
                      {
                          OnSuccess = "ProcessDataPort",
-                         Url = Url.Action("Search2Json", new {  }),
+                         Url = Url.Action("Search2Json", new { }),
                          HttpMethod = "POST",
                          UpdateTargetId = "placeForRoom"
                      }))
                      {
                         <div>
-                            @Html.Label("Finish3", "Маркер:")
-                            @Html.TextBox("Finish1", 1, new {})
+                            @Html.Label("FinishLabel", "Маркер:")
+                            @Html.TextBox("finish", 1, new {style = "display:none"})
+                            @Html.TextBox("finishDouble", 1, new {disabled="disabled"})
+                            @Html.Label("PortLabel", "Введите номер выбранного порта:")
                         </div> 
-                        <div>
-                            @Html.Label("Finish2", "Введите номер выбранного порта:")
+                        <div id="portBlock">                            
                             @{
-                                if (Model.Finish != 0)
-                                {
-                                    @Html.DropDownListFor(m=>m.Port, new SelectList(Model.Markers.Where(m=>m.Id == Model.Finish).First().Device.Neighbours.Keys))
-                                }
+                                @Html.DropDownList("port", new SelectList((Session["Finish"] as Marker).Device.Neighbours.Keys.ToString()), "1")
                             }
                         </div> 
                         <input type="submit" value="Начать поиск" class="btn btn-info"/>
