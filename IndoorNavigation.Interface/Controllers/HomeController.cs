@@ -83,45 +83,13 @@ namespace IndoorNavigation.Interface.Controllers
             return View(markers);
         }
         
-        /*для обработки нажатия кнопки при выборе маркера перед поиском (для повторного открытия
-         * страницы первого этапа поиска).
-         перенаправляет на метод отображения результатов поиска. */
-        [HttpPost]
-        public RedirectToRouteResult Search1(Marker startMar, Marker finishMar)
-        {
-            TempData["start"] = startMar.Id;
-            TempData["finish"] = finishMar.Id;
-            return RedirectToAction("GetRoute");
-        }
-
-        /*Для первоначального открытия страницы второго этапа поиска*/
-        [HttpGet]
-        public ViewResult Search2()
-        {
-            return View();
-        }
-        
-        /* Для открытия страницы второго этапа поиска в ответ на отправку формы */
-        [HttpPost]
-        public ViewResult Search2(Marker finishMar, int port) 
-        {
-            MarkerWithPort m1 = new MarkerWithPort() { finishMar = finishMar, port = port };
-            return View(m1);
-        }
-
         /*для выдачи результата второго этапа поиска*/
         //public JsonResult Search2Json(Marker finishMar, int port)
-        public JsonResult Search2Json(int MarkerID, int port)
+        public JsonResult Search2Json(int finish, int port)
         {
-            Marker finishMar = repo.Markers.Where(x => x.Id == MarkerID).First();
-            
+            Marker finishMar = repo.Markers.Where(m => m.Id == finish).First();
             finishMar.Device.FillPorts();
-            
-            // Спросить андрея по этому поводу
-            //Marker linkedMar = finishMar.Device.Neighbours[port].Markers.First();
-
-            Marker linkedMar = finishMar.Device.Ports.Where(x => x.Id == port).First().Device2.Markers.First();
-
+            Marker linkedMar = finishMar.Device.Neighbours[port].Markers.First();
             var data1 =  new
             {
                 Id = linkedMar.Id, X = linkedMar.X, Y = linkedMar.Y, Z = linkedMar.Z,
@@ -130,7 +98,8 @@ namespace IndoorNavigation.Interface.Controllers
                 Device = (linkedMar.Device != null) ? new { Description = linkedMar.Device.Description, Type = linkedMar.Device.Type } : null,
                 Neighbours = linkedMar.Neighbours.Select(t => new
                 {
-                    Id = t.Key.Id
+                    Id = t.Key.Id,
+                    Distance = t.Value
                 })
             };
             var data2 = new
@@ -144,13 +113,7 @@ namespace IndoorNavigation.Interface.Controllers
                     Id = t.Key.Id
                 })
             };
-
-            // почему finishMar = это заданный маркер, а linkedMar = результат поиска 
-            //потому что finishMar - это маркер, полученный на финише 1 этапа поиска, потому назван finish
-            //var data = new { finishMar = data2, linkedMar = data1 };
-
-            var data = new { finishMar = data1, linkedMar = data2 };
-
+            var data = new { finish = data2, linkedMar = data1 };
             return Json(data, JsonRequestBehavior.AllowGet);
         }
         
